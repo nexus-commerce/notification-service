@@ -1,0 +1,18 @@
+{{template "base" .}}
+
+{{define "title"}}Welcome to MyEcom{{end}}
+
+{{define "header"}}Welcome to MyEcom!{{end}}
+
+{{define "content"}}
+    <div style="text-align: center;">
+        <p>Hi {{.FirstName}},</p>
+        <p>Thank you for registering at MyEcom. We are thrilled to have you with us.</p>
+        <p>You can now browse our collection and start shopping.</p>
+        <a href="{{.LoginURL}}" class="button">Start Shopping</a>
+        <p>If the button above doesn't work, copy and paste this link into your browser:</p>
+        <p><a href="{{.LoginURL}}">{{.LoginURL}}</a></p>
+    </div>
+{{end}}
+
+{{define "footer-text"}}Thank you for joining us!{{end}}

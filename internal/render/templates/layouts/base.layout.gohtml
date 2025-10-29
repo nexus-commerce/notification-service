@@ -1,0 +1,106 @@
+{{define "base"}}
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{{block "title" .}}MyEcom{{end}}</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+                line-height: 1.6;
+                color: #333;
+                background-color: #f4f4f4;
+                margin: 0;
+                padding: 0;
+            }
+            .container {
+                max-width: 600px;
+                margin: 20px auto;
+                padding: 20px;
+                background-color: #fff;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+            }
+            .header {
+                font-size: 24px;
+                font-weight: bold;
+                text-align: center;
+                padding-bottom: 20px;
+                border-bottom: 1px solid #eee;
+            }
+            .content {
+                padding: 20px 0;
+            }
+            .order-details, .items-table {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+            .items-table {
+                border-collapse: collapse;
+            }
+            .items-table th, .items-table td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+                vertical-align: middle;
+            }
+            .items-table th {
+                background-color: #f8f8f8;
+            }
+            .item-info img {
+                margin-right: 10px;
+                vertical-align: middle;
+            }
+            .total {
+                text-align: right;
+                font-size: 16px;
+                margin-top: 20px;
+            }
+            .total p {
+                margin: 5px 0;
+            }
+            .total .grand-total {
+                font-size: 18px;
+                font-weight: bold;
+            }
+            .button {
+                display: inline-block;
+                padding: 10px 20px;
+                margin: 20px 0;
+                background-color: #007bff;
+                color: #fff;
+                text-decoration: none;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+            .footer {
+                text-align: center;
+                font-size: 12px;
+                color: #777;
+                padding-top: 20px;
+                border-top: 1px solid #eee;
+            }
+            .footer a {
+                white-space: nowrap;
+                color: #007bff;
+            }
+        </style>
+    </head>
+    <body>
+    <div class="container">
+        <div class="header">
+            {{block "header" .}}{{end}}
+        </div>
+        <div class="content">
+            {{block "content" .}}{{end}}
+        </div>
+        <div class="footer">
+            <p>If you have any questions, please contact our customer service team at <a href="mailto:contact@my-ecom-project.dynv6.net">contact@my-ecom-project.dynv6.net</a>.</p>
+            <p>{{block "footer-text" .}}Thank you for shopping with us!{{end}}</p>
+            <p>© 2025 MyEcom. All rights reserved.</p>
+        </div>
+    </div>
+    </body>
+    </html>
+{{end}}

@@ -1,0 +1,65 @@
+{{template "base" .}}
+
+{{define "title"}}Order Confirmation{{end}}
+
+{{define "header"}}Order Confirmation{{end}}
+
+{{define "content"}}
+    <p>Hi {{.CustomerFirstName}},</p>
+    <p>Thank you for your order! We've received it and are getting it ready for shipment. Here are the details:</p>
+
+    <h3>Order #{{.OrderID}}</h3>
+    <table class="order-details">
+        <tr>
+            <td><strong>Order Date:</strong></td>
+            <td>{{.OrderDate.Format "Jan 2, 2006"}}</td>
+        </tr>
+        <tr>
+            <td><strong>Shipping Address:</strong></td>
+            <td>{{.ShippingAddress}}</td>
+        </tr>
+        <tr>
+            <td><strong>Estimated Delivery:</strong></td>
+            <td>{{.EstimatedDelivery.Format "Jan 2, 2006"}}</td>
+        </tr>
+        <tr>
+            <td><strong>Payment Method:</strong></td>
+            {{if eq .PaymentMethod "CARD"}}
+                <td>Credit Card</td>
+            {{else}}
+                <td>On Delivery</td>
+            {{end}}
+        </tr>
+    </table>
+
+    <h3>Items Ordered</h3>
+    <table class="items-table">
+        <thead>
+        <tr>
+            <th>Item</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Total</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{range .Items}}
+            <tr>
+                <td class="item-info">
+                    <img src="{{.ImageURL}}" alt="{{.Name}}" width="50" height="50">
+                    <span>{{.Name}} ({{.Sku}})</span>
+                </td>
+                <td>{{.Quantity}}</td>
+                <td>${{printf "%.2f" .Price}}</td>
+                <td>${{printf "%.2f" .ItemTotalPrice}}</td>
+            </tr>
+        {{end}}
+        </tbody>
+    </table>
+
+    <div class="total">
+        <p class="grand-total">Total: ${{printf "%.2f" .Amount}}</p>
+    </div>
+{{end}}
+
+{{define "footer-text"}}Thank you for shopping with us!{{end}}
