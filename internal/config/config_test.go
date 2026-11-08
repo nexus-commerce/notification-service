@@ -34,7 +34,7 @@ func TestLoadAppliesDefaults(t *testing.T) {
 	if cfg.GroupID != "notification-service" {
 		t.Errorf("GroupID = %q", cfg.GroupID)
 	}
-	if cfg.FromName != "MyEcom" {
+	if cfg.FromName != "NexusEcommerce" {
 		t.Errorf("FromName = %q", cfg.FromName)
 	}
 	if cfg.Frontend.URL != "http://localhost:5173" {

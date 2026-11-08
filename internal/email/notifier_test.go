@@ -114,7 +114,7 @@ func messages(t *testing.T) map[string]messageCase {
 		},
 		"welcome": {
 			notification.Welcome{To: jane},
-			wantEmail{templateWelcome, "Welcome to MyEcom", "Your account is ready",
+			wantEmail{templateWelcome, "Welcome to NexusEcommerce", "Your account is ready",
 				welcomeData{Greeting: "Hi Jane,", LoginURL: loginURL}},
 		},
 		"duplicate registration": {

@@ -46,7 +46,7 @@ func TestSendClassifiesStatus(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(http.StatusText(tc.code), func(t *testing.T) {
 			c := &fakeClient{resp: &rest.Response{StatusCode: tc.code, Body: "secret-body"}}
-			err := newMailer(c, "MyEcom", "from@example.com").Send(t.Context(), testEmail)
+			err := newMailer(c, "NexusEcommerce", "from@example.com").Send(t.Context(), testEmail)
 			if (err != nil) != tc.wantErr {
 				t.Fatalf("Send() error = %v, wantErr %v", err, tc.wantErr)
 			}
@@ -62,7 +62,7 @@ func TestSendClassifiesStatus(t *testing.T) {
 
 func TestSendTransportError(t *testing.T) {
 	c := &fakeClient{err: errors.New("connection reset")}
-	err := newMailer(c, "MyEcom", "from@example.com").Send(t.Context(), testEmail)
+	err := newMailer(c, "NexusEcommerce", "from@example.com").Send(t.Context(), testEmail)
 	if err == nil {
 		t.Fatal("Send() error = nil, want error")
 	}
@@ -73,12 +73,12 @@ func TestSendTransportError(t *testing.T) {
 
 func TestSendBuildsMessage(t *testing.T) {
 	c := &fakeClient{resp: &rest.Response{StatusCode: 202}}
-	if err := newMailer(c, "MyEcom", "from@example.com").Send(t.Context(), testEmail); err != nil {
+	if err := newMailer(c, "NexusEcommerce", "from@example.com").Send(t.Context(), testEmail); err != nil {
 		t.Fatalf("Send() error: %v", err)
 	}
 	m := c.got
-	if m.From.Name != "MyEcom" || m.From.Address != "from@example.com" {
-		t.Errorf("From = %+v, want MyEcom <from@example.com>", m.From)
+	if m.From.Name != "NexusEcommerce" || m.From.Address != "from@example.com" {
+		t.Errorf("From = %+v, want NexusEcommerce <from@example.com>", m.From)
 	}
 	if m.Subject != "Hi" {
 		t.Errorf("Subject = %q, want %q", m.Subject, "Hi")

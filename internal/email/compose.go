@@ -86,8 +86,8 @@ func (n *Notifier) compose(msg notification.Message) (composed, error) {
 	case notification.Welcome:
 		return composed{
 			template:  templateWelcome,
-			subject:   "Welcome to MyEcom",
-			plainText: "Welcome to MyEcom! Your account is ready.",
+			subject:   "Welcome to NexusEcommerce",
+			plainText: "Welcome to NexusEcommerce! Your account is ready.",
 			data:      welcomeData{Greeting: m.To.Greeting(), LoginURL: n.links.LoginURL()},
 		}, nil
 
