@@ -90,6 +90,36 @@ func TestRenderGreeting(t *testing.T) {
 	}
 }
 
+func TestRenderOrderGreeting(t *testing.T) {
+	r, err := New()
+	if err != nil {
+		t.Fatalf("New() error: %v", err)
+	}
+	when := time.Date(2026, 11, 8, 12, 0, 0, 0, time.UTC)
+	for name, tc := range map[string]struct{ first, want, notWant string }{
+		"anonymous": {"", "Hello,", "Hi ,"},
+		"named":     {"Jane", "Hi Jane,", "Hello,"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			got, err := r.Render(usecase.PageOrderConfirmed, event.OrderConfirmed{
+				CustomerFirstName: tc.first,
+				OrderDate:         when,
+				EstimatedDelivery: when,
+				PaymentMethod:     "CARD",
+			})
+			if err != nil {
+				t.Fatalf("Render() error: %v", err)
+			}
+			if !strings.Contains(got, tc.want) {
+				t.Errorf("Render() = %q, want it to contain %q", got, tc.want)
+			}
+			if strings.Contains(got, tc.notWant) {
+				t.Errorf("Render() = %q, want it not to contain %q", got, tc.notWant)
+			}
+		})
+	}
+}
+
 func TestRenderConfirmationShowsLink(t *testing.T) {
 	r, err := New()
 	if err != nil {

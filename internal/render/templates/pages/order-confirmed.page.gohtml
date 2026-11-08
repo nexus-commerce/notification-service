@@ -5,7 +5,7 @@
 {{define "header"}}Order Confirmation{{end}}
 
 {{define "content"}}
-    <p>Hi {{.CustomerFirstName}},</p>
+    <p>{{if .CustomerFirstName}}Hi {{.CustomerFirstName}},{{else}}Hello,{{end}}</p>
     <p>Thank you for your order! We've received it and are getting it ready for shipment. Here are the details:</p>
 
     <h3>Order #{{.OrderID}}</h3>
