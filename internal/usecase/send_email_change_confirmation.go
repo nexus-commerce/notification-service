@@ -30,6 +30,7 @@ func (s *SendEmailChangeConfirmation) Execute(ctx context.Context, ev event.Emai
 	if err != nil {
 		return err
 	}
+	link := s.links.ConfirmEmail(token)
 	data := struct {
 		FirstName string
 		Link      string
@@ -37,7 +38,7 @@ func (s *SendEmailChangeConfirmation) Execute(ctx context.Context, ev event.Emai
 		ExpiresAt time.Time
 	}{
 		FirstName: ev.FirstName,
-		Link:      s.links.ConfirmEmail(token),
+		Link:      link,
 		NewEmail:  ev.NewEmail,
 		ExpiresAt: ev.ExpiresAt,
 	}
@@ -45,5 +46,6 @@ func (s *SendEmailChangeConfirmation) Execute(ctx context.Context, ev event.Emai
 		ToName:    fullName(ev.FirstName, ev.LastName),
 		ToAddress: ev.NewEmail,
 		Subject:   "Confirm your new email address",
+		PlainText: "Confirm your new email address: " + link,
 	})
 }

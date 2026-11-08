@@ -49,6 +49,9 @@ func TestSendRegistrationConfirmation(t *testing.T) {
 	if got.HTML != "<html>confirm-registration" {
 		t.Errorf("HTML = %q, want %q", got.HTML, "<html>confirm-registration")
 	}
+	if wantLink := "http://front.test/confirm-registration?token=tok+en%2F1"; !strings.Contains(got.PlainText, wantLink) {
+		t.Errorf("PlainText = %q, want it to contain %q", got.PlainText, wantLink)
+	}
 	if r.page != usecase.PageConfirmRegistration {
 		t.Errorf("page = %q, want %q", r.page, usecase.PageConfirmRegistration)
 	}

@@ -3,6 +3,7 @@ package usecase_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -47,6 +48,9 @@ func TestSendEmailChangeConfirmation(t *testing.T) {
 	}
 	if got.HTML != "<html>confirm-email" {
 		t.Errorf("HTML = %q, want %q", got.HTML, "<html>confirm-email")
+	}
+	if wantLink := "http://front.test/confirm-email?token=tok+en%2F1"; !strings.Contains(got.PlainText, wantLink) {
+		t.Errorf("PlainText = %q, want it to contain %q", got.PlainText, wantLink)
 	}
 	if r.page != usecase.PageConfirmEmail {
 		t.Errorf("page = %q, want %q", r.page, usecase.PageConfirmEmail)

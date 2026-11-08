@@ -30,18 +30,20 @@ func (s *SendRegistrationConfirmation) Execute(ctx context.Context, ev event.Reg
 	if err != nil {
 		return err
 	}
+	link := s.links.ConfirmRegistration(token)
 	data := struct {
 		FirstName string
 		Link      string
 		ExpiresAt time.Time
 	}{
 		FirstName: ev.FirstName,
-		Link:      s.links.ConfirmRegistration(token),
+		Link:      link,
 		ExpiresAt: ev.ExpiresAt,
 	}
 	return send(ctx, s.renderer, s.mailer, PageConfirmRegistration, data, Email{
 		ToName:    fullName(ev.FirstName, ev.LastName),
 		ToAddress: ev.Email,
 		Subject:   "Confirm your registration",
+		PlainText: "Confirm your registration: " + link,
 	})
 }
