@@ -1,34 +1,52 @@
 package render
 
 import (
+	"bytes"
 	"embed"
+	"fmt"
 	"html/template"
 	"io/fs"
-	"path/filepath"
+	"path"
+	"strings"
 )
 
 //go:embed templates/**/*
 var templateFS embed.FS
 
-func NewTemplateCache() (map[string]*template.Template, error) {
-	cache := map[string]*template.Template{}
+const pageSuffix = ".page.gohtml"
 
-	pages, err := fs.Glob(templateFS, "templates/pages/*.page.gohtml")
+type Renderer struct {
+	pages map[string]*template.Template
+}
+
+// New parses the embedded pages. contactAddress is the support address
+// shown in the footer of every email.
+func New(contactAddress string) (*Renderer, error) {
+	files, err := fs.Glob(templateFS, "templates/pages/*"+pageSuffix)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("glob pages: %w", err)
 	}
-
-	for _, page := range pages {
-		name := filepath.Base(page)
-
-		ts, err := template.New(name).ParseFS(templateFS,
-			"templates/layouts/*.layout.gohtml", page)
+	funcs := template.FuncMap{"contactAddress": func() string { return contactAddress }}
+	pages := make(map[string]*template.Template, len(files))
+	for _, file := range files {
+		base := path.Base(file)
+		ts, err := template.New(base).Funcs(funcs).ParseFS(templateFS, "templates/layouts/*.layout.gohtml", file)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parse %s: %w", base, err)
 		}
-
-		cache[name] = ts
+		pages[strings.TrimSuffix(base, pageSuffix)] = ts
 	}
+	return &Renderer{pages: pages}, nil
+}
 
-	return cache, nil
+func (r *Renderer) Render(page string, data any) (string, error) {
+	ts, ok := r.pages[page]
+	if !ok {
+		return "", fmt.Errorf("unknown page %q", page)
+	}
+	var buf bytes.Buffer
+	if err := ts.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("execute page %q: %w", page, err)
+	}
+	return buf.String(), nil
 }

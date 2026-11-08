@@ -1,0 +1,22 @@
+services:
+  notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: notification-service-dev
+    container_name: notification-service
+    hostname: notification-service
+    networks:
+      - ecommerce-network
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 29092
+    restart: on-failure
+
+networks:
+  ecommerce-network:
+    external: true

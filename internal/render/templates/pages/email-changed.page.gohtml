@@ -1,0 +1,15 @@
+{{template "base" .}}
+
+{{define "title"}}Your email address was changed{{end}}
+
+{{define "header"}}Email address changed{{end}}
+
+{{define "content"}}
+    <div style="text-align: center;">
+        <p>{{.Greeting}}</p>
+        <p>The email address of your MyEcom account was changed to <strong>{{.NewEmail}}</strong>.</p>
+        <p>If you did not make this change, please contact our customer service team right away.</p>
+    </div>
+{{end}}
+
+{{define "footer-text"}}Thank you for being with us!{{end}}
