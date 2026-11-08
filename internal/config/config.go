@@ -7,7 +7,7 @@ import (
 )
 
 type Kafka struct {
-	Host string `env:"KAFKA_HOST,required"`
+	Host string `env:"KAFKA_HOST,required,notEmpty"`
 	Port string `env:"KAFKA_PORT" envDefault:"29092"`
 }
 
@@ -20,14 +20,14 @@ type Consumer struct {
 }
 
 type SendGrid struct {
-	APIKey      string `env:"SENDGRID_API_KEY,required"`
+	APIKey      string `env:"SENDGRID_API_KEY,required,notEmpty"`
 	FromName    string `env:"MAIL_FROM_NAME" envDefault:"MyEcom"`
 	FromAddress string `env:"MAIL_FROM_ADDRESS" envDefault:"contact@my-ecom-project.dynv6.net"`
 }
 
 type Notification struct {
-	PrivateKey string `env:"NOTIFICATION_PRIVATE_KEY,required"`
-	KeyID      string `env:"NOTIFICATION_KEY_ID,required"`
+	PrivateKey string `env:"NOTIFICATION_PRIVATE_KEY,required,notEmpty"`
+	KeyID      string `env:"NOTIFICATION_KEY_ID,required,notEmpty"`
 }
 
 type Frontend struct {

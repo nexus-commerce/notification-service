@@ -41,6 +41,18 @@ func TestLoadAppliesDefaults(t *testing.T) {
 	}
 }
 
+func TestLoadRejectsEmptyRequired(t *testing.T) {
+	for _, name := range []string{"SENDGRID_API_KEY", "NOTIFICATION_PRIVATE_KEY", "NOTIFICATION_KEY_ID", "KAFKA_HOST"} {
+		t.Run(name, func(t *testing.T) {
+			setRequired(t)
+			t.Setenv(name, "")
+			if _, err := Load[testCfg](); err == nil {
+				t.Errorf("Load() with empty %s error = nil, want error", name)
+			}
+		})
+	}
+}
+
 func TestLoadRequiresKafkaHost(t *testing.T) {
 	setRequired(t)
 	os.Unsetenv("KAFKA_HOST")
