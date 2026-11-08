@@ -1,11 +1,13 @@
-module notification-service
+module github.com/nexus-commerce/notification-service
 
-go 1.24.5
+go 1.27.2
 
 require (
+	github.com/caarlos0/env/v6 v6.10.1
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/segmentio/kafka-go v0.4.49
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
+	golang.org/x/sync v0.24.0
 )
 
 require (

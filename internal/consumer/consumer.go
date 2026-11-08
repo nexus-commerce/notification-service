@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/segmentio/kafka-go"
 	"log"
-	"notification-service/internal/config"
-	"notification-service/internal/service"
 	"sync"
+
+	"github.com/segmentio/kafka-go"
+
+	"github.com/nexus-commerce/notification-service/internal/config"
+	"github.com/nexus-commerce/notification-service/internal/service"
 )
 
 type HandlerFunc func(ctx context.Context, m *kafka.Message) error
@@ -34,7 +36,7 @@ func (c *Consumer) Start() {
 
 	listeners := map[string]HandlerFunc{
 		"orders.confirmed": c.handleOrderConfirmed,
-		"users.registered": c.handleUserRegistered,
+		"users":            c.handleUserRegistered,
 	}
 
 	for topic, handler := range listeners {
