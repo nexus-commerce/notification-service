@@ -50,27 +50,3 @@ func (r *Renderer) Render(page string, data any) (string, error) {
 	}
 	return buf.String(), nil
 }
-
-// NewTemplateCache is kept for the legacy service until it is removed.
-func NewTemplateCache() (map[string]*template.Template, error) {
-	cache := map[string]*template.Template{}
-
-	pages, err := fs.Glob(templateFS, "templates/pages/*"+pageSuffix)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, page := range pages {
-		name := path.Base(page)
-
-		ts, err := template.New(name).ParseFS(templateFS,
-			"templates/layouts/*.layout.gohtml", page)
-		if err != nil {
-			return nil, err
-		}
-
-		cache[name] = ts
-	}
-
-	return cache, nil
-}

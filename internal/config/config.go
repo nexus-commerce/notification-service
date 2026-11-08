@@ -4,7 +4,6 @@ import (
 	"net"
 
 	"github.com/caarlos0/env/v6"
-	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Kafka struct {
@@ -41,25 +40,4 @@ func Load[T any]() (*T, error) {
 		return nil, err
 	}
 	return cfg, nil
-}
-
-// Config and New are the legacy loader, removed together with the old code.
-type Config struct {
-	Sendgrid struct {
-		APIKey string `env:"SENDGRID_API_KEY" envDefault:"your_sendgrid_api_key"`
-	}
-	Kafka struct {
-		Host string `env:"KAFKA_HOST" envDefault:"kafka"`
-		Port string `env:"KAFKA_PORT" envDefault:"9092"`
-	}
-}
-
-func New() (*Config, error) {
-	var config Config
-
-	if err := cleanenv.ReadEnv(&config); err != nil {
-		return nil, err
-	}
-
-	return &config, nil
 }
