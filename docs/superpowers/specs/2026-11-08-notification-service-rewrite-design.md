@@ -1,7 +1,7 @@
 # Notification-service rewrite — design
 
 Date: 2026-11-08
-Status: draft, awaiting approval
+Status: approved
 
 ## Intent
 
@@ -139,8 +139,10 @@ still in the topic): empty name → generic greeting.
 
 - Malformed JSON / wrong data / bad token / key-id mismatch / template missing
   → permanent (skip, log).
-- SendGrid network error or 5xx/429 → temporary (retry with backoff).
-- SendGrid 4xx other than 429 → permanent.
+- SendGrid network error, 5xx, 429, 401 or 403 → temporary (retry with backoff).
+  Designer's call: 401/403 are credential/account failures, not message
+  failures, so the message is retried rather than dropped.
+- Other SendGrid 4xx → permanent.
 
 ## Constraints
 

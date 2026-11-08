@@ -32,8 +32,9 @@ func newMailer(c client, fromName, fromAddress string) *Mailer {
 	return &Mailer{client: c, fromName: fromName, fromAddress: fromAddress}
 }
 
-// Send delivers e. Transport errors, 429 and 5xx are returned as plain
-// (retryable) errors; other non-2xx statuses wrap usecase.ErrUndeliverable.
+// Send delivers e. Transport errors, 401, 403, 429 and 5xx are returned as plain
+// (retryable) errors, since credential and account failures are not message
+// failures; other non-2xx statuses wrap usecase.ErrUndeliverable.
 // Errors never include the message content or the response body.
 func (m *Mailer) Send(ctx context.Context, e usecase.Email) error {
 	msg := mail.NewSingleEmail(
@@ -50,7 +51,8 @@ func (m *Mailer) Send(ctx context.Context, e usecase.Email) error {
 	switch code := resp.StatusCode; {
 	case code >= 200 && code < 300:
 		return nil
-	case code == http.StatusTooManyRequests || code >= 500:
+	case code == http.StatusTooManyRequests || code == http.StatusUnauthorized ||
+		code == http.StatusForbidden || code >= 500:
 		return fmt.Errorf("sendgrid status %d", code)
 	default:
 		return fmt.Errorf("%w: sendgrid status %d", usecase.ErrUndeliverable, code)

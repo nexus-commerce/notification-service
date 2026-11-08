@@ -38,6 +38,8 @@ func TestSendClassifiesStatus(t *testing.T) {
 		{http.StatusAccepted, false, false},
 		{http.StatusTooManyRequests, true, false},
 		{http.StatusServiceUnavailable, true, false},
+		{http.StatusUnauthorized, true, false},
+		{http.StatusForbidden, true, false},
 		{http.StatusBadRequest, true, true},
 	}
 	for _, tc := range tests {
