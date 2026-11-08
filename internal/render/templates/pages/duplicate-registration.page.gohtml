@@ -6,7 +6,7 @@
 
 {{define "content"}}
     <div style="text-align: center;">
-        <p>{{if .FirstName}}Hi {{.FirstName}},{{else}}Hello,{{end}}</p>
+        <p>{{.Greeting}}</p>
         <p>Someone tried to register a MyEcom account with this email address, but an account already exists.</p>
         <p>If this was you, simply log in. If you forgot your password, you can reset it on the login page.</p>
         <a href="{{.LoginURL}}" class="button">Log in</a>

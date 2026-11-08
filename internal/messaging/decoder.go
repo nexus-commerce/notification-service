@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nexus-commerce/notification-service/internal/event"
+	"github.com/nexus-commerce/notification-service/internal/notification"
 )
 
 var ErrMalformedMessage = errors.New("malformed message")
@@ -51,15 +51,21 @@ func decodePayload[T any](got string, raw jsontext.Value, typ string) (T, error)
 	return data, nil
 }
 
-func require(ok bool, what string) error {
-	if !ok {
-		return fmt.Errorf("%w: missing %s", ErrMalformedMessage, what)
+func malformedField(field string, err error) error {
+	if err == nil {
+		return nil
 	}
-	return nil
+	return fmt.Errorf("%w: %s: %w", ErrMalformedMessage, field, err)
+}
+
+func malformed(err error) error {
+	if err == nil {
+		return nil
+	}
+	return fmt.Errorf("%w: %w", ErrMalformedMessage, err)
 }
 
 type userRegistrationRequested struct {
-	UserID         string    `json:"userId"`
 	Email          string    `json:"email"`
 	FirstName      string    `json:"firstName"`
 	LastName       string    `json:"lastName"`
@@ -68,67 +74,56 @@ type userRegistrationRequested struct {
 	ExpiresAt      time.Time `json:"expiresAt"`
 }
 
-func DecodeRegistrationRequested(value []byte) (event.RegistrationRequested, error) {
+func DecodeRegistrationRequested(value []byte) (notification.RegistrationRequested, error) {
 	d, err := decodeData[userRegistrationRequested](value, TypeRegistrationRequested)
 	if err != nil {
-		return event.RegistrationRequested{}, err
+		return notification.RegistrationRequested{}, err
 	}
-	if err := errors.Join(
-		require(d.Email != "", "email"),
-		require(len(d.EncryptedToken) > 0, "encryptedToken"),
-		require(!d.ExpiresAt.IsZero(), "expiresAt"),
-	); err != nil {
-		return event.RegistrationRequested{}, err
+	r, recipientErr := notification.NewRecipient(d.FirstName, d.LastName, d.Email)
+	token, tokenErr := notification.NewConfirmationToken(d.EncryptedToken, d.KeyID, d.ExpiresAt)
+	if err := errors.Join(malformedField("email", recipientErr), malformed(tokenErr)); err != nil {
+		return notification.RegistrationRequested{}, err
 	}
-	return event.RegistrationRequested{
-		UserID:         d.UserID,
-		Email:          d.Email,
-		FirstName:      d.FirstName,
-		LastName:       d.LastName,
-		EncryptedToken: d.EncryptedToken,
-		KeyID:          d.KeyID,
-		ExpiresAt:      d.ExpiresAt,
-	}, nil
+	return notification.RegistrationRequested{Recipient: r, Token: token}, nil
 }
 
 type userRegistered struct {
-	UserID    string `json:"userId"`
 	Email     string `json:"email"`
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
 }
 
-func DecodeRegistered(value []byte) (event.Registered, error) {
+func DecodeRegistered(value []byte) (notification.Registered, error) {
 	d, err := decodeData[userRegistered](value, TypeRegistered)
 	if err != nil {
-		return event.Registered{}, err
+		return notification.Registered{}, err
 	}
-	if err := require(d.Email != "", "email"); err != nil {
-		return event.Registered{}, err
+	r, err := notification.NewRecipient(d.FirstName, d.LastName, d.Email)
+	if err != nil {
+		return notification.Registered{}, malformedField("email", err)
 	}
-	return event.Registered{UserID: d.UserID, Email: d.Email, FirstName: d.FirstName, LastName: d.LastName}, nil
+	return notification.Registered{Recipient: r}, nil
 }
 
 type userDuplicateRegistrationAttempted struct {
-	UserID    string `json:"userId"`
 	Email     string `json:"email"`
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
 }
 
-func DecodeDuplicateRegistrationAttempted(value []byte) (event.DuplicateRegistrationAttempted, error) {
+func DecodeDuplicateRegistrationAttempted(value []byte) (notification.DuplicateRegistrationAttempted, error) {
 	d, err := decodeData[userDuplicateRegistrationAttempted](value, TypeDuplicateRegistrationAttempted)
 	if err != nil {
-		return event.DuplicateRegistrationAttempted{}, err
+		return notification.DuplicateRegistrationAttempted{}, err
 	}
-	if err := require(d.Email != "", "email"); err != nil {
-		return event.DuplicateRegistrationAttempted{}, err
+	r, err := notification.NewRecipient(d.FirstName, d.LastName, d.Email)
+	if err != nil {
+		return notification.DuplicateRegistrationAttempted{}, malformedField("email", err)
 	}
-	return event.DuplicateRegistrationAttempted{UserID: d.UserID, Email: d.Email, FirstName: d.FirstName, LastName: d.LastName}, nil
+	return notification.DuplicateRegistrationAttempted{Recipient: r}, nil
 }
 
 type userEmailChangeRequested struct {
-	UserID         string    `json:"userId"`
 	NewEmail       string    `json:"newEmail"`
 	FirstName      string    `json:"firstName"`
 	LastName       string    `json:"lastName"`
@@ -137,68 +132,52 @@ type userEmailChangeRequested struct {
 	ExpiresAt      time.Time `json:"expiresAt"`
 }
 
-func DecodeEmailChangeRequested(value []byte) (event.EmailChangeRequested, error) {
+func DecodeEmailChangeRequested(value []byte) (notification.EmailChangeRequested, error) {
 	d, err := decodeData[userEmailChangeRequested](value, TypeEmailChangeRequested)
 	if err != nil {
-		return event.EmailChangeRequested{}, err
+		return notification.EmailChangeRequested{}, err
 	}
-	if err := errors.Join(
-		require(d.NewEmail != "", "newEmail"),
-		require(len(d.EncryptedToken) > 0, "encryptedToken"),
-		require(!d.ExpiresAt.IsZero(), "expiresAt"),
-	); err != nil {
-		return event.EmailChangeRequested{}, err
+	r, recipientErr := notification.NewRecipient(d.FirstName, d.LastName, d.NewEmail)
+	token, tokenErr := notification.NewConfirmationToken(d.EncryptedToken, d.KeyID, d.ExpiresAt)
+	if err := errors.Join(malformedField("newEmail", recipientErr), malformed(tokenErr)); err != nil {
+		return notification.EmailChangeRequested{}, err
 	}
-	return event.EmailChangeRequested{
-		UserID:         d.UserID,
-		NewEmail:       d.NewEmail,
-		FirstName:      d.FirstName,
-		LastName:       d.LastName,
-		EncryptedToken: d.EncryptedToken,
-		KeyID:          d.KeyID,
-		ExpiresAt:      d.ExpiresAt,
-	}, nil
+	return notification.EmailChangeRequested{Recipient: r, Token: token}, nil
 }
 
 type userEmailChangeToTakenAddressAttempted struct {
-	UserID   string `json:"userId"`
 	NewEmail string `json:"newEmail"`
 }
 
-func DecodeEmailChangeToTakenAddressAttempted(value []byte) (event.EmailChangeToTakenAddressAttempted, error) {
+func DecodeEmailChangeToTakenAddressAttempted(value []byte) (notification.EmailChangeToTakenAddressAttempted, error) {
 	d, err := decodeData[userEmailChangeToTakenAddressAttempted](value, TypeEmailChangeToTakenAddressAttempted)
 	if err != nil {
-		return event.EmailChangeToTakenAddressAttempted{}, err
+		return notification.EmailChangeToTakenAddressAttempted{}, err
 	}
-	if err := require(d.NewEmail != "", "newEmail"); err != nil {
-		return event.EmailChangeToTakenAddressAttempted{}, err
+	r, err := notification.NewRecipient("", "", d.NewEmail)
+	if err != nil {
+		return notification.EmailChangeToTakenAddressAttempted{}, malformedField("newEmail", err)
 	}
-	return event.EmailChangeToTakenAddressAttempted{UserID: d.UserID, NewEmail: d.NewEmail}, nil
+	return notification.EmailChangeToTakenAddressAttempted{Recipient: r}, nil
 }
 
 type userEmailChanged struct {
-	UserID    string `json:"userId"`
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
 	OldEmail  string `json:"oldEmail"`
 	NewEmail  string `json:"newEmail"`
 }
 
-func DecodeEmailChanged(value []byte) (event.EmailChanged, error) {
+func DecodeEmailChanged(value []byte) (notification.EmailChanged, error) {
 	d, err := decodeData[userEmailChanged](value, TypeEmailChanged)
 	if err != nil {
-		return event.EmailChanged{}, err
+		return notification.EmailChanged{}, err
 	}
-	if err := require(d.OldEmail != "", "oldEmail"); err != nil {
-		return event.EmailChanged{}, err
+	r, err := notification.NewRecipient(d.FirstName, d.LastName, d.OldEmail)
+	if err != nil {
+		return notification.EmailChanged{}, malformedField("oldEmail", err)
 	}
-	return event.EmailChanged{
-		UserID:    d.UserID,
-		OldEmail:  d.OldEmail,
-		NewEmail:  d.NewEmail,
-		FirstName: d.FirstName,
-		LastName:  d.LastName,
-	}, nil
+	return notification.EmailChanged{Recipient: r, NewEmail: d.NewEmail}, nil
 }
 
 type orderConfirmed struct {
@@ -208,8 +187,6 @@ type orderConfirmed struct {
 	OrderID           int64        `json:"order_id"`
 	OrderDate         time.Time    `json:"order_date"`
 	PaymentMethod     string       `json:"payment_method"`
-	PaymentIntentID   *string      `json:"payment_intent_id"`
-	UserID            int64        `json:"user_id"`
 	Items             []*orderItem `json:"items"`
 	Amount            float64      `json:"amount"`
 	ShippingAddress   string       `json:"shipping_address"`
@@ -217,48 +194,62 @@ type orderConfirmed struct {
 }
 
 type orderItem struct {
-	Quantity       int32   `json:"quantity"`
-	Price          float64 `json:"price"`
-	Sku            string  `json:"sku"`
-	Name           string  `json:"name"`
-	ImageURL       string  `json:"image_url"`
-	ItemTotalPrice float64 `json:"item_total_price"`
+	Quantity   int32   `json:"quantity"`
+	Price      float64 `json:"price"`
+	SKU        string  `json:"sku"`
+	Name       string  `json:"name"`
+	ImageURL   string  `json:"image_url"`
+	TotalPrice float64 `json:"item_total_price"`
 }
 
-func DecodeOrderConfirmed(value []byte) (event.OrderConfirmed, error) {
+func DecodeOrderConfirmed(value []byte) (notification.OrderConfirmed, error) {
 	d, err := decodeOrderData[orderConfirmed](value, TypeOrderConfirmed)
 	if err != nil {
-		return event.OrderConfirmed{}, err
+		return notification.OrderConfirmed{}, err
 	}
-	if err := require(d.CustomerEmail != "", "customer_email"); err != nil {
-		return event.OrderConfirmed{}, err
+	r, recipientErr := notification.NewRecipient(d.CustomerFirstName, d.CustomerLastName, d.CustomerEmail)
+	paidByCard, payErr := decodePaidByCard(d.PaymentMethod)
+	if err := errors.Join(malformedField("customer_email", recipientErr), payErr); err != nil {
+		return notification.OrderConfirmed{}, err
 	}
-	items := make([]*event.OrderItem, 0, len(d.Items))
+	items := make([]notification.OrderItem, 0, len(d.Items))
 	for _, it := range d.Items {
 		if it == nil {
 			continue
 		}
-		items = append(items, &event.OrderItem{
-			Quantity:       it.Quantity,
-			Price:          it.Price,
-			Sku:            it.Sku,
-			Name:           it.Name,
-			ImageURL:       it.ImageURL,
-			ItemTotalPrice: it.ItemTotalPrice,
+		items = append(items, notification.OrderItem{
+			Quantity:   it.Quantity,
+			Price:      it.Price,
+			SKU:        it.SKU,
+			Name:       it.Name,
+			ImageURL:   it.ImageURL,
+			TotalPrice: it.TotalPrice,
 		})
 	}
-	return event.OrderConfirmed{
-		CustomerFirstName: d.CustomerFirstName,
-		CustomerLastName:  d.CustomerLastName,
-		CustomerEmail:     d.CustomerEmail,
+	return notification.OrderConfirmed{
+		Recipient:         r,
 		OrderID:           d.OrderID,
 		OrderDate:         d.OrderDate,
-		PaymentMethod:     d.PaymentMethod,
-		PaymentIntentID:   d.PaymentIntentID,
-		UserID:            d.UserID,
+		PaidByCard:        paidByCard,
 		Items:             items,
-		Amount:            d.Amount,
+		Total:             d.Amount,
 		ShippingAddress:   d.ShippingAddress,
 		EstimatedDelivery: d.EstimatedDelivery,
 	}, nil
+}
+
+const (
+	paymentMethodCard       = "PAYMENT_METHOD_CARD"
+	paymentMethodOnDelivery = "PAYMENT_METHOD_ON_DELIVERY"
+)
+
+func decodePaidByCard(method string) (bool, error) {
+	switch method {
+	case paymentMethodCard:
+		return true, nil
+	case paymentMethodOnDelivery:
+		return false, nil
+	default:
+		return false, fmt.Errorf("%w: unknown payment_method %q", ErrMalformedMessage, method)
+	}
 }

@@ -15,7 +15,8 @@ const (
 	TypeOrderConfirmed                     = "orders.confirmed"
 )
 
-type Message struct {
+// Record is an event as read from a topic: its type, routing data and raw payload.
+type Record struct {
 	Type  string
 	Topic string
 	Key   string

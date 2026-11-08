@@ -17,6 +17,7 @@ func setRequired(t *testing.T) {
 	t.Helper()
 	t.Setenv("KAFKA_HOST", "kafka")
 	t.Setenv("SENDGRID_API_KEY", "k")
+	t.Setenv("MAIL_FROM_ADDRESS", "from@example.com")
 	t.Setenv("NOTIFICATION_PRIVATE_KEY", "p")
 	t.Setenv("NOTIFICATION_KEY_ID", "dev")
 }
@@ -42,7 +43,7 @@ func TestLoadAppliesDefaults(t *testing.T) {
 }
 
 func TestLoadRejectsEmptyRequired(t *testing.T) {
-	for _, name := range []string{"SENDGRID_API_KEY", "NOTIFICATION_PRIVATE_KEY", "NOTIFICATION_KEY_ID", "KAFKA_HOST"} {
+	for _, name := range []string{"SENDGRID_API_KEY", "MAIL_FROM_ADDRESS", "NOTIFICATION_PRIVATE_KEY", "NOTIFICATION_KEY_ID", "KAFKA_HOST"} {
 		t.Run(name, func(t *testing.T) {
 			setRequired(t)
 			t.Setenv(name, "")
@@ -53,10 +54,14 @@ func TestLoadRejectsEmptyRequired(t *testing.T) {
 	}
 }
 
-func TestLoadRequiresKafkaHost(t *testing.T) {
-	setRequired(t)
-	os.Unsetenv("KAFKA_HOST")
-	if _, err := Load[testCfg](); err == nil {
-		t.Fatal("expected error")
+func TestLoadRequiresUnsetVars(t *testing.T) {
+	for _, name := range []string{"KAFKA_HOST", "MAIL_FROM_ADDRESS"} {
+		t.Run(name, func(t *testing.T) {
+			setRequired(t)
+			os.Unsetenv(name)
+			if _, err := Load[testCfg](); err == nil {
+				t.Errorf("Load() without %s error = nil, want error", name)
+			}
+		})
 	}
 }

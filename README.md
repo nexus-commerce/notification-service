@@ -34,7 +34,7 @@ Variables are read from the environment; a local `.env` file is loaded if presen
 | `KAFKA_CONSUMER_GROUP`     | no       | `notification-service`             | Consumer group id                             |
 | `SENDGRID_API_KEY`         | yes      | -                                  | SendGrid API key                              |
 | `MAIL_FROM_NAME`           | no       | `MyEcom`                           | Sender display name                           |
-| `MAIL_FROM_ADDRESS`        | no       | `contact@my-ecom-project.dynv6.net`| Sender address                                |
+| `MAIL_FROM_ADDRESS`        | yes      | -                                  | Sender address, on a SendGrid-verified domain |
 | `NOTIFICATION_PRIVATE_KEY` | yes      | -                                  | Private key used to open sealed tokens        |
 | `NOTIFICATION_KEY_ID`      | yes      | -                                  | Id of the key pair, must match the token's    |
 | `FRONTEND_URL`             | no       | `http://localhost:5173`            | Base URL for links in emails                  |

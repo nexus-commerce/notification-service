@@ -5,7 +5,7 @@
 {{define "header"}}Order Confirmation{{end}}
 
 {{define "content"}}
-    <p>{{if .CustomerFirstName}}Hi {{.CustomerFirstName}},{{else}}Hello,{{end}}</p>
+    <p>{{.Greeting}}</p>
     <p>Thank you for your order! We've received it and are getting it ready for shipment. Here are the details:</p>
 
     <h3>Order #{{.OrderID}}</h3>
@@ -24,11 +24,7 @@
         </tr>
         <tr>
             <td><strong>Payment Method:</strong></td>
-            {{if eq .PaymentMethod "CARD"}}
-                <td>Credit Card</td>
-            {{else}}
-                <td>On Delivery</td>
-            {{end}}
+            <td>{{if .PaidByCard}}Credit Card{{else}}On Delivery{{end}}</td>
         </tr>
     </table>
 
@@ -47,18 +43,18 @@
             <tr>
                 <td class="item-info">
                     <img src="{{.ImageURL}}" alt="{{.Name}}" width="50" height="50">
-                    <span>{{.Name}} ({{.Sku}})</span>
+                    <span>{{.Name}} ({{.SKU}})</span>
                 </td>
                 <td>{{.Quantity}}</td>
                 <td>${{printf "%.2f" .Price}}</td>
-                <td>${{printf "%.2f" .ItemTotalPrice}}</td>
+                <td>${{printf "%.2f" .TotalPrice}}</td>
             </tr>
         {{end}}
         </tbody>
     </table>
 
     <div class="total">
-        <p class="grand-total">Total: ${{printf "%.2f" .Amount}}</p>
+        <p class="grand-total">Total: ${{printf "%.2f" .Total}}</p>
     </div>
 {{end}}
 

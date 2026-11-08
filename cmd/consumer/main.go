@@ -14,6 +14,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/nexus-commerce/notification-service/internal/config"
+	"github.com/nexus-commerce/notification-service/internal/email"
 	"github.com/nexus-commerce/notification-service/internal/kafka"
 	"github.com/nexus-commerce/notification-service/internal/lifecycle"
 	"github.com/nexus-commerce/notification-service/internal/messaging"
@@ -54,27 +55,28 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("create token opener: %w", err)
 	}
-	renderer, err := render.New()
+	renderer, err := render.New(cfg.SendGrid.FromAddress)
 	if err != nil {
 		return fmt.Errorf("create renderer: %w", err)
 	}
 	mailer := sendgrid.New(cfg.SendGrid.APIKey, cfg.SendGrid.FromName, cfg.SendGrid.FromAddress)
-	links, err := usecase.NewLinks(cfg.Frontend.URL)
+	links, err := email.NewLinks(cfg.Frontend.URL)
 	if err != nil {
 		return fmt.Errorf("create links: %w", err)
 	}
+	notifier := email.NewNotifier(renderer, mailer, links)
 
 	users, err := kafka.NewConsumer(kafka.ConsumerOptions{
 		Addr:    cfg.Kafka.Addr(),
 		GroupID: cfg.Consumer.GroupID,
 		Topic:   messaging.TopicUsers,
 	},
-		kafka.NewRegistrationRequested(usecase.NewSendRegistrationConfirmation(renderer, mailer, opener, links, time.Now)),
-		kafka.NewRegistered(usecase.NewSendWelcome(renderer, mailer, links)),
-		kafka.NewDuplicateRegistrationAttempted(usecase.NewSendDuplicateRegistrationNotice(renderer, mailer, links)),
-		kafka.NewEmailChangeRequested(usecase.NewSendEmailChangeConfirmation(renderer, mailer, opener, links, time.Now)),
-		kafka.NewEmailChangeToTakenAddressAttempted(usecase.NewSendEmailTakenNotice(renderer, mailer)),
-		kafka.NewEmailChanged(usecase.NewSendEmailChangedNotice(renderer, mailer)),
+		kafka.NewRegistrationRequested(usecase.NewSendRegistrationConfirmation(notifier, opener, time.Now)),
+		kafka.NewRegistered(usecase.NewSendWelcome(notifier)),
+		kafka.NewDuplicateRegistrationAttempted(usecase.NewSendDuplicateRegistrationNotice(notifier)),
+		kafka.NewEmailChangeRequested(usecase.NewSendEmailChangeConfirmation(notifier, opener, time.Now)),
+		kafka.NewEmailChangeToTakenAddressAttempted(usecase.NewSendEmailTakenNotice(notifier)),
+		kafka.NewEmailChanged(usecase.NewSendEmailChangedNotice(notifier)),
 	)
 	if err != nil {
 		return fmt.Errorf("create users consumer: %w", err)
@@ -90,7 +92,7 @@ func run() error {
 		GroupID:          cfg.Consumer.GroupID,
 		Topic:            messaging.TopicOrdersConfirmed,
 		DefaultEventType: messaging.TypeOrderConfirmed,
-	}, kafka.NewOrderConfirmed(usecase.NewSendOrderConfirmation(renderer, mailer)))
+	}, kafka.NewOrderConfirmed(usecase.NewSendOrderConfirmation(notifier)))
 	if err != nil {
 		return fmt.Errorf("create orders consumer: %w", err)
 	}

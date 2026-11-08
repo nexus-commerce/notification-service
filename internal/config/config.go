@@ -22,7 +22,7 @@ type Consumer struct {
 type SendGrid struct {
 	APIKey      string `env:"SENDGRID_API_KEY,required,notEmpty"`
 	FromName    string `env:"MAIL_FROM_NAME" envDefault:"MyEcom"`
-	FromAddress string `env:"MAIL_FROM_ADDRESS" envDefault:"contact@my-ecom-project.dynv6.net"`
+	FromAddress string `env:"MAIL_FROM_ADDRESS,required,notEmpty"`
 }
 
 type Notification struct {

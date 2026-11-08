@@ -5,9 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/nexus-commerce/notification-service/internal/event"
 	"github.com/nexus-commerce/notification-service/internal/messaging"
-	"github.com/nexus-commerce/notification-service/internal/usecase"
+	"github.com/nexus-commerce/notification-service/internal/notification"
 )
 
 type executor[T any] interface {
@@ -22,43 +21,47 @@ type EventHandler[T any] struct {
 
 func (h *EventHandler[T]) EventType() string { return h.typ }
 
-func (h *EventHandler[T]) Handle(ctx context.Context, msg messaging.Message) error {
-	e, err := h.decode(msg.Value)
+func (h *EventHandler[T]) Handle(ctx context.Context, rec messaging.Record) error {
+	e, err := h.decode(rec.Value)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrPermanent, err)
 	}
 
 	err = h.uc.Execute(ctx, e)
-	if errors.Is(err, usecase.ErrUndeliverable) {
+	if errors.Is(err, notification.ErrUndeliverable) {
 		return fmt.Errorf("%w: %w", ErrPermanent, err)
 	}
 	return err
 }
 
-func NewRegistrationRequested(uc executor[event.RegistrationRequested]) *EventHandler[event.RegistrationRequested] {
-	return &EventHandler[event.RegistrationRequested]{typ: messaging.TypeRegistrationRequested, decode: messaging.DecodeRegistrationRequested, uc: uc}
+func newEventHandler[T any](typ string, decode func([]byte) (T, error), uc executor[T]) *EventHandler[T] {
+	return &EventHandler[T]{typ: typ, decode: decode, uc: uc}
 }
 
-func NewRegistered(uc executor[event.Registered]) *EventHandler[event.Registered] {
-	return &EventHandler[event.Registered]{typ: messaging.TypeRegistered, decode: messaging.DecodeRegistered, uc: uc}
+func NewRegistrationRequested(uc executor[notification.RegistrationRequested]) *EventHandler[notification.RegistrationRequested] {
+	return newEventHandler(messaging.TypeRegistrationRequested, messaging.DecodeRegistrationRequested, uc)
 }
 
-func NewDuplicateRegistrationAttempted(uc executor[event.DuplicateRegistrationAttempted]) *EventHandler[event.DuplicateRegistrationAttempted] {
-	return &EventHandler[event.DuplicateRegistrationAttempted]{typ: messaging.TypeDuplicateRegistrationAttempted, decode: messaging.DecodeDuplicateRegistrationAttempted, uc: uc}
+func NewRegistered(uc executor[notification.Registered]) *EventHandler[notification.Registered] {
+	return newEventHandler(messaging.TypeRegistered, messaging.DecodeRegistered, uc)
 }
 
-func NewEmailChangeRequested(uc executor[event.EmailChangeRequested]) *EventHandler[event.EmailChangeRequested] {
-	return &EventHandler[event.EmailChangeRequested]{typ: messaging.TypeEmailChangeRequested, decode: messaging.DecodeEmailChangeRequested, uc: uc}
+func NewDuplicateRegistrationAttempted(uc executor[notification.DuplicateRegistrationAttempted]) *EventHandler[notification.DuplicateRegistrationAttempted] {
+	return newEventHandler(messaging.TypeDuplicateRegistrationAttempted, messaging.DecodeDuplicateRegistrationAttempted, uc)
 }
 
-func NewEmailChangeToTakenAddressAttempted(uc executor[event.EmailChangeToTakenAddressAttempted]) *EventHandler[event.EmailChangeToTakenAddressAttempted] {
-	return &EventHandler[event.EmailChangeToTakenAddressAttempted]{typ: messaging.TypeEmailChangeToTakenAddressAttempted, decode: messaging.DecodeEmailChangeToTakenAddressAttempted, uc: uc}
+func NewEmailChangeRequested(uc executor[notification.EmailChangeRequested]) *EventHandler[notification.EmailChangeRequested] {
+	return newEventHandler(messaging.TypeEmailChangeRequested, messaging.DecodeEmailChangeRequested, uc)
 }
 
-func NewEmailChanged(uc executor[event.EmailChanged]) *EventHandler[event.EmailChanged] {
-	return &EventHandler[event.EmailChanged]{typ: messaging.TypeEmailChanged, decode: messaging.DecodeEmailChanged, uc: uc}
+func NewEmailChangeToTakenAddressAttempted(uc executor[notification.EmailChangeToTakenAddressAttempted]) *EventHandler[notification.EmailChangeToTakenAddressAttempted] {
+	return newEventHandler(messaging.TypeEmailChangeToTakenAddressAttempted, messaging.DecodeEmailChangeToTakenAddressAttempted, uc)
 }
 
-func NewOrderConfirmed(uc executor[event.OrderConfirmed]) *EventHandler[event.OrderConfirmed] {
-	return &EventHandler[event.OrderConfirmed]{typ: messaging.TypeOrderConfirmed, decode: messaging.DecodeOrderConfirmed, uc: uc}
+func NewEmailChanged(uc executor[notification.EmailChanged]) *EventHandler[notification.EmailChanged] {
+	return newEventHandler(messaging.TypeEmailChanged, messaging.DecodeEmailChanged, uc)
+}
+
+func NewOrderConfirmed(uc executor[notification.OrderConfirmed]) *EventHandler[notification.OrderConfirmed] {
+	return newEventHandler(messaging.TypeOrderConfirmed, messaging.DecodeOrderConfirmed, uc)
 }

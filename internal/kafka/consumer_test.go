@@ -21,7 +21,7 @@ type fakeHandler struct {
 
 func (h *fakeHandler) EventType() string { return h.typ }
 
-func (h *fakeHandler) Handle(context.Context, messaging.Message) error {
+func (h *fakeHandler) Handle(context.Context, messaging.Record) error {
 	h.calls++
 	if len(h.errs) == 0 {
 		return nil
@@ -48,7 +48,7 @@ func TestNewRouterRejectsDuplicateHandlers(t *testing.T) {
 
 func TestRouteSkipsUnknownType(t *testing.T) {
 	h := &fakeHandler{typ: "known"}
-	if err := mustRouter(t, h).route(t.Context(), messaging.Message{Type: "unknown"}); err != nil {
+	if err := mustRouter(t, h).route(t.Context(), messaging.Record{Type: "unknown"}); err != nil {
 		t.Fatalf("route() error: %v", err)
 	}
 	if h.calls != 0 {
@@ -58,7 +58,7 @@ func TestRouteSkipsUnknownType(t *testing.T) {
 
 func TestRouteSkipsPermanentFailure(t *testing.T) {
 	h := &fakeHandler{typ: "known", errs: []error{fmt.Errorf("%w: bad payload", ErrPermanent)}}
-	if err := mustRouter(t, h).route(t.Context(), messaging.Message{Type: "known"}); err != nil {
+	if err := mustRouter(t, h).route(t.Context(), messaging.Record{Type: "known"}); err != nil {
 		t.Fatalf("route() error: %v", err)
 	}
 	if h.calls != 1 {
@@ -72,7 +72,7 @@ func TestRouteRetriesWithBackoff(t *testing.T) {
 		h := &fakeHandler{typ: "known", errs: []error{transient, transient, transient}}
 		start := time.Now()
 
-		if err := mustRouter(t, h).route(t.Context(), messaging.Message{Type: "known"}); err != nil {
+		if err := mustRouter(t, h).route(t.Context(), messaging.Record{Type: "known"}); err != nil {
 			t.Fatalf("route() error: %v", err)
 		}
 		if h.calls != 4 {
@@ -94,11 +94,12 @@ func TestRouteCapsBackoff(t *testing.T) {
 		h := &fakeHandler{typ: "known", errs: errs}
 		start := time.Now()
 
-		if err := mustRouter(t, h).route(t.Context(), messaging.Message{Type: "known"}); err != nil {
+		if err := mustRouter(t, h).route(t.Context(), messaging.Record{Type: "known"}); err != nil {
 			t.Fatalf("route() error: %v", err)
 		}
-		want := time.Duration(0)
-		for delay, i := minRetryDelay, 0; i < len(errs); i++ {
+		var want time.Duration
+		delay := minRetryDelay
+		for range errs {
 			want += delay
 			delay = min(delay*2, maxRetryDelay)
 		}
@@ -114,7 +115,7 @@ func TestRouteStopsOnCancel(t *testing.T) {
 		h := &fakeHandler{typ: "known", errs: []error{errors.New("db unavailable")}}
 		time.AfterFunc(50*time.Millisecond, cancel)
 
-		if err := mustRouter(t, h).route(ctx, messaging.Message{Type: "known"}); !errors.Is(err, context.Canceled) {
+		if err := mustRouter(t, h).route(ctx, messaging.Record{Type: "known"}); !errors.Is(err, context.Canceled) {
 			t.Fatalf("route() error = %v, want %v", err, context.Canceled)
 		}
 		if h.calls != 1 {
@@ -123,32 +124,32 @@ func TestRouteStopsOnCancel(t *testing.T) {
 	})
 }
 
-func TestToMessageUsesDefaultEventType(t *testing.T) {
-	msg := toMessage(kafka.Message{Topic: "orders", Key: []byte("key")}, "orders.confirmed")
-	if got, want := msg.Type, "orders.confirmed"; got != want {
-		t.Errorf("toMessage().Type = %q, want %q", got, want)
+func TestToRecordUsesDefaultEventType(t *testing.T) {
+	rec := toRecord(kafka.Message{Topic: "orders", Key: []byte("key")}, "orders.confirmed")
+	if got, want := rec.Type, "orders.confirmed"; got != want {
+		t.Errorf("toRecord().Type = %q, want %q", got, want)
 	}
 }
 
-func TestToMessageHeaderOverridesDefault(t *testing.T) {
-	msg := toMessage(kafka.Message{
+func TestToRecordHeaderOverridesDefault(t *testing.T) {
+	rec := toRecord(kafka.Message{
 		Headers: []kafka.Header{{Key: messaging.HeaderEventType, Value: []byte("user.renamed")}},
 	}, "orders.confirmed")
-	if got, want := msg.Type, "user.renamed"; got != want {
-		t.Errorf("toMessage().Type = %q, want %q", got, want)
+	if got, want := rec.Type, "user.renamed"; got != want {
+		t.Errorf("toRecord().Type = %q, want %q", got, want)
 	}
 }
 
-func TestToMessageReadsEventType(t *testing.T) {
-	msg := toMessage(kafka.Message{
+func TestToRecordReadsEventType(t *testing.T) {
+	rec := toRecord(kafka.Message{
 		Topic:   "users",
 		Key:     []byte("key"),
 		Value:   []byte("value"),
 		Headers: []kafka.Header{{Key: "other", Value: []byte("x")}, {Key: messaging.HeaderEventType, Value: []byte("user.renamed")}},
 	}, "")
-	want := messaging.Message{Type: "user.renamed", Topic: "users", Key: "key", Value: []byte("value")}
-	if msg.Type != want.Type || msg.Topic != want.Topic || msg.Key != want.Key || string(msg.Value) != string(want.Value) {
-		t.Errorf("toMessage() = %+v, want %+v", msg, want)
+	want := messaging.Record{Type: "user.renamed", Topic: "users", Key: "key", Value: []byte("value")}
+	if rec.Type != want.Type || rec.Topic != want.Topic || rec.Key != want.Key || string(rec.Value) != string(want.Value) {
+		t.Errorf("toRecord() = %+v, want %+v", rec, want)
 	}
 }
 
@@ -198,7 +199,7 @@ func TestRunRetriesTemporaryKafkaErrors(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 		h := &fakeHandler{typ: "known"}
-		reader := &fakeReader{
+		fakeRd := &fakeReader{
 			fetches: []fetchResult{
 				{err: kafka.NotCoordinatorForGroup},
 				{err: fmt.Errorf("fetch: %w", kafka.GroupCoordinatorNotAvailable)},
@@ -207,7 +208,7 @@ func TestRunRetriesTemporaryKafkaErrors(t *testing.T) {
 			commitErr: []error{kafka.NotCoordinatorForGroup},
 			done:      cancel,
 		}
-		c := &Consumer{reader: reader, router: mustRouter(t, h)}
+		c := &Consumer{reader: fakeRd, router: mustRouter(t, h)}
 
 		if err := c.Run(ctx); err != nil {
 			t.Fatalf("Run() error = %v, want nil", err)
@@ -215,16 +216,16 @@ func TestRunRetriesTemporaryKafkaErrors(t *testing.T) {
 		if h.calls != 1 {
 			t.Errorf("handler called %d times, want 1", h.calls)
 		}
-		if len(reader.committed) != 1 || reader.committed[0].Offset != 7 {
-			t.Errorf("committed %+v, want offset 7", reader.committed)
+		if len(fakeRd.committed) != 1 || fakeRd.committed[0].Offset != 7 {
+			t.Errorf("committed %+v, want offset 7", fakeRd.committed)
 		}
 	})
 }
 
 func TestRunStopsOnNonTemporaryFetchError(t *testing.T) {
 	want := errors.New("broken reader")
-	reader := &fakeReader{fetches: []fetchResult{{err: want}}, done: func() {}}
-	c := &Consumer{reader: reader, router: mustRouter(t)}
+	fakeRd := &fakeReader{fetches: []fetchResult{{err: want}}, done: func() {}}
+	c := &Consumer{reader: fakeRd, router: mustRouter(t)}
 
 	if err := c.Run(t.Context()); !errors.Is(err, want) {
 		t.Fatalf("Run() error = %v, want %v", err, want)
@@ -235,11 +236,11 @@ func TestRunUsesDefaultEventType(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 		h := &fakeHandler{typ: "orders.confirmed"}
-		reader := &fakeReader{
+		fakeRd := &fakeReader{
 			fetches: []fetchResult{{msg: kafka.Message{Offset: 3}}},
 			done:    cancel,
 		}
-		c := &Consumer{reader: reader, router: mustRouter(t, h), defaultType: "orders.confirmed"}
+		c := &Consumer{reader: fakeRd, router: mustRouter(t, h), defaultType: "orders.confirmed"}
 
 		if err := c.Run(ctx); err != nil {
 			t.Fatalf("Run() error: %v", err)
@@ -247,8 +248,8 @@ func TestRunUsesDefaultEventType(t *testing.T) {
 		if h.calls != 1 {
 			t.Errorf("handler called %d times, want 1", h.calls)
 		}
-		if len(reader.committed) != 1 || reader.committed[0].Offset != 3 {
-			t.Errorf("committed %+v, want offset 3", reader.committed)
+		if len(fakeRd.committed) != 1 || fakeRd.committed[0].Offset != 3 {
+			t.Errorf("committed %+v, want offset 3", fakeRd.committed)
 		}
 	})
 }

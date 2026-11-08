@@ -10,7 +10,8 @@ import (
 	"github.com/sendgrid/rest"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 
-	"github.com/nexus-commerce/notification-service/internal/usecase"
+	"github.com/nexus-commerce/notification-service/internal/email"
+	"github.com/nexus-commerce/notification-service/internal/notification"
 )
 
 type fakeClient struct {
@@ -24,8 +25,8 @@ func (f *fakeClient) SendWithContext(_ context.Context, m *mail.SGMailV3) (*rest
 	return f.resp, f.err
 }
 
-var email = usecase.Email{
-	ToName: "Jane Doe", ToAddress: "jane@example.com",
+var testEmail = email.Email{
+	To:      mustRecipient("Jane", "Doe", "jane@example.com"),
 	Subject: "Hi", PlainText: "plain", HTML: "<p>html</p>",
 }
 
@@ -45,11 +46,11 @@ func TestSendClassifiesStatus(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(http.StatusText(tc.code), func(t *testing.T) {
 			c := &fakeClient{resp: &rest.Response{StatusCode: tc.code, Body: "secret-body"}}
-			err := newMailer(c, "MyEcom", "from@example.com").Send(context.Background(), email)
+			err := newMailer(c, "MyEcom", "from@example.com").Send(t.Context(), testEmail)
 			if (err != nil) != tc.wantErr {
 				t.Fatalf("Send() error = %v, wantErr %v", err, tc.wantErr)
 			}
-			if got := errors.Is(err, usecase.ErrUndeliverable); got != tc.undeliverable {
+			if got := errors.Is(err, notification.ErrUndeliverable); got != tc.undeliverable {
 				t.Errorf("Send() undeliverable = %v, want %v", got, tc.undeliverable)
 			}
 			if err != nil && strings.Contains(err.Error(), "secret-body") {
@@ -61,18 +62,18 @@ func TestSendClassifiesStatus(t *testing.T) {
 
 func TestSendTransportError(t *testing.T) {
 	c := &fakeClient{err: errors.New("connection reset")}
-	err := newMailer(c, "MyEcom", "from@example.com").Send(context.Background(), email)
+	err := newMailer(c, "MyEcom", "from@example.com").Send(t.Context(), testEmail)
 	if err == nil {
 		t.Fatal("Send() error = nil, want error")
 	}
-	if errors.Is(err, usecase.ErrUndeliverable) {
+	if errors.Is(err, notification.ErrUndeliverable) {
 		t.Errorf("Send() error = %v, want retryable", err)
 	}
 }
 
 func TestSendBuildsMessage(t *testing.T) {
 	c := &fakeClient{resp: &rest.Response{StatusCode: 202}}
-	if err := newMailer(c, "MyEcom", "from@example.com").Send(context.Background(), email); err != nil {
+	if err := newMailer(c, "MyEcom", "from@example.com").Send(t.Context(), testEmail); err != nil {
 		t.Fatalf("Send() error: %v", err)
 	}
 	m := c.got
@@ -86,4 +87,13 @@ func TestSendBuildsMessage(t *testing.T) {
 	if to.Name != "Jane Doe" || to.Address != "jane@example.com" {
 		t.Errorf("To = %+v, want Jane Doe <jane@example.com>", to)
 	}
+}
+
+// mustRecipient builds a valid test recipient and panics on an invalid one.
+func mustRecipient(firstName, lastName, address string) notification.Recipient {
+	r, err := notification.NewRecipient(firstName, lastName, address)
+	if err != nil {
+		panic(err)
+	}
+	return r
 }

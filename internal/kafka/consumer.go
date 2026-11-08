@@ -22,7 +22,7 @@ var ErrPermanent = errors.New("permanent message failure")
 
 type Handler interface {
 	EventType() string
-	Handle(ctx context.Context, msg messaging.Message) error
+	Handle(ctx context.Context, rec messaging.Record) error
 }
 
 type ConsumerOptions struct {
@@ -33,6 +33,9 @@ type ConsumerOptions struct {
 	DefaultEventType string
 }
 
+// messageReader is the part of *kafka.Reader that Consumer uses. NewConsumer
+// wires in the real reader; tests substitute a fake to drive retries and
+// commits without a broker.
 type messageReader interface {
 	FetchMessage(ctx context.Context) (kafka.Message, error)
 	CommitMessages(ctx context.Context, msgs ...kafka.Message) error
@@ -84,7 +87,7 @@ func (c *Consumer) Run(ctx context.Context) error {
 			return fmt.Errorf("fetch message: %w", err)
 		}
 
-		if err = c.router.route(ctx, toMessage(km, c.defaultType)); err != nil {
+		if err = c.router.route(ctx, toRecord(km, c.defaultType)); err != nil {
 			if ctx.Err() != nil {
 				log.Println("Stopping kafka consumer")
 				return nil
@@ -109,8 +112,8 @@ func (c *Consumer) Close() error {
 	return c.reader.Close()
 }
 
-func toMessage(km kafka.Message, defaultType string) messaging.Message {
-	msg := messaging.Message{
+func toRecord(km kafka.Message, defaultType string) messaging.Record {
+	rec := messaging.Record{
 		Type:  defaultType,
 		Topic: km.Topic,
 		Key:   string(km.Key),
@@ -118,10 +121,10 @@ func toMessage(km kafka.Message, defaultType string) messaging.Message {
 	}
 	for _, h := range km.Headers {
 		if h.Key == messaging.HeaderEventType {
-			msg.Type = string(h.Value)
+			rec.Type = string(h.Value)
 		}
 	}
-	return msg
+	return rec
 }
 
 type router map[string]Handler
@@ -130,25 +133,25 @@ func newRouter(handlers ...Handler) (router, error) {
 	r := make(router, len(handlers))
 	for _, h := range handlers {
 		if _, ok := r[h.EventType()]; ok {
-			return nil, fmt.Errorf("duplicate handler for event type %s", h.EventType())
+			return nil, fmt.Errorf("duplicate handler for event type %q", h.EventType())
 		}
 		r[h.EventType()] = h
 	}
 	return r, nil
 }
 
-func (r router) route(ctx context.Context, msg messaging.Message) error {
-	h, ok := r[msg.Type]
+func (r router) route(ctx context.Context, rec messaging.Record) error {
+	h, ok := r[rec.Type]
 	if !ok {
 		return nil
 	}
 
-	op := fmt.Sprintf("handle %s message with key %s", msg.Type, msg.Key)
+	op := fmt.Sprintf("handle %q record with key %q", rec.Type, rec.Key)
 	err := retry(ctx, op, func(err error) bool { return !errors.Is(err, ErrPermanent) }, func() error {
-		return h.Handle(ctx, msg)
+		return h.Handle(ctx, rec)
 	})
 	if errors.Is(err, ErrPermanent) {
-		log.Printf("skip %s message with key %s: %v", msg.Type, msg.Key, err)
+		log.Printf("skip %q record with key %q: %v", rec.Type, rec.Key, err)
 		return nil
 	}
 	return err
