@@ -124,18 +124,18 @@ func messages(t *testing.T) map[string]messageCase {
 		},
 		"email change confirmation": {
 			notification.EmailChangeConfirmation{To: janeNewAddress, Token: revealed(t, "tok en/1"), ExpiresAt: when},
-			wantEmail{templateConfirmEmail, "Confirm your new email address", emailLink,
-				confirmEmailData{Greeting: "Hi Jane,", Link: emailLink, NewEmail: "new@example.com", ExpiresAt: when}},
+			wantEmail{templateConfirmEmailChange, "Confirm your new email address", emailLink,
+				confirmEmailChangeData{Greeting: "Hi Jane,", Link: emailLink, NewAddress: "new@example.com", ExpiresAt: when}},
 		},
 		"email taken": {
-			notification.EmailTakenNotice{To: anonymous},
-			wantEmail{templateEmailTaken, "Someone tried to use your email address", "change their account email",
-				emailTakenData{Email: "jane@example.com"}},
+			notification.AddressTakenNotice{To: anonymous},
+			wantEmail{templateAddressTaken, "Someone tried to use your email address", "change their account email",
+				addressTakenData{Address: "jane@example.com"}},
 		},
 		"email changed": {
-			notification.EmailChangedNotice{To: jane, NewEmail: "new@example.com"},
+			notification.EmailChangedNotice{To: jane, NewAddress: "new@example.com"},
 			wantEmail{templateEmailChanged, "Your email address was changed", "was changed",
-				emailChangedData{Greeting: "Hi Jane,", NewEmail: "new@example.com"}},
+				emailChangedData{Greeting: "Hi Jane,", NewAddress: "new@example.com"}},
 		},
 		"order confirmation": {
 			order(true),
@@ -211,7 +211,7 @@ func TestNotifyGreetsAnonymousRecipient(t *testing.T) {
 	fakeR := &fakeRenderer{}
 
 	n := NewNotifier(fakeR, &fakeMailer{}, newLinks(t))
-	notice := notification.EmailChangedNotice{To: anonymous, NewEmail: "n@x"}
+	notice := notification.EmailChangedNotice{To: anonymous, NewAddress: "n@x"}
 
 	if err := n.Notify(t.Context(), notice); err != nil {
 		t.Fatalf("Notify() error: %v", err)

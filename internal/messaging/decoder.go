@@ -177,7 +177,7 @@ func DecodeEmailChanged(value []byte) (notification.EmailChanged, error) {
 	if err != nil {
 		return notification.EmailChanged{}, malformedField("oldEmail", err)
 	}
-	return notification.EmailChanged{Recipient: r, NewEmail: d.NewEmail}, nil
+	return notification.EmailChanged{Recipient: r, NewAddress: d.NewEmail}, nil
 }
 
 type orderConfirmed struct {

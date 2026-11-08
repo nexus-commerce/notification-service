@@ -56,17 +56,17 @@ type EmailChangeToTakenAddressAttempted struct {
 	Recipient Recipient
 }
 
-func (e EmailChangeToTakenAddressAttempted) Notice() EmailTakenNotice {
-	return EmailTakenNotice{To: e.Recipient}
+func (e EmailChangeToTakenAddressAttempted) Notice() AddressTakenNotice {
+	return AddressTakenNotice{To: e.Recipient}
 }
 
 type EmailChanged struct {
-	Recipient Recipient
-	NewEmail  string
+	Recipient  Recipient
+	NewAddress string
 }
 
 func (e EmailChanged) Notice() EmailChangedNotice {
-	return EmailChangedNotice{To: e.Recipient, NewEmail: e.NewEmail}
+	return EmailChangedNotice{To: e.Recipient, NewAddress: e.NewAddress}
 }
 
 type OrderConfirmed struct {

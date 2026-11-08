@@ -96,11 +96,11 @@ func TestNotices(t *testing.T) {
 		},
 		"email change to taken address": {
 			got:  notification.EmailChangeToTakenAddressAttempted{Recipient: jane}.Notice(),
-			want: notification.EmailTakenNotice{To: jane},
+			want: notification.AddressTakenNotice{To: jane},
 		},
 		"email changed": {
-			got:  notification.EmailChanged{Recipient: jane, NewEmail: "new@example.com"}.Notice(),
-			want: notification.EmailChangedNotice{To: jane, NewEmail: "new@example.com"},
+			got:  notification.EmailChanged{Recipient: jane, NewAddress: "new@example.com"}.Notice(),
+			want: notification.EmailChangedNotice{To: jane, NewAddress: "new@example.com"},
 		},
 	}
 	for name, tt := range tests {

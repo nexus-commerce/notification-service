@@ -12,8 +12,8 @@ const (
 	templateConfirmRegistration   = "confirm-registration"
 	templateWelcome               = "welcome"
 	templateDuplicateRegistration = "duplicate-registration"
-	templateConfirmEmail          = "confirm-email"
-	templateEmailTaken            = "email-taken"
+	templateConfirmEmailChange    = "confirm-email-change"
+	templateAddressTaken          = "address-taken"
 	templateEmailChanged          = "email-changed"
 	templateOrderConfirmed        = "order-confirmed"
 )
@@ -39,18 +39,18 @@ type (
 		Greeting string
 		LoginURL string
 	}
-	confirmEmailData struct {
-		Greeting  string
-		Link      string
-		NewEmail  string
-		ExpiresAt time.Time
+	confirmEmailChangeData struct {
+		Greeting   string
+		Link       string
+		NewAddress string
+		ExpiresAt  time.Time
 	}
-	emailTakenData struct {
-		Email string
+	addressTakenData struct {
+		Address string
 	}
 	emailChangedData struct {
-		Greeting string
-		NewEmail string
+		Greeting   string
+		NewAddress string
 	}
 	orderConfirmedData struct {
 		Greeting          string
@@ -100,25 +100,25 @@ func (n *Notifier) compose(msg notification.Message) (composed, error) {
 		}, nil
 
 	case notification.EmailChangeConfirmation:
-		link := n.links.ConfirmEmailURL(m.Token.Value())
+		link := n.links.EmailChangeConfirmationURL(m.Token.Value())
 		return composed{
-			template:  templateConfirmEmail,
+			template:  templateConfirmEmailChange,
 			subject:   "Confirm your new email address",
 			plainText: "Confirm your new email address: " + link,
-			data: confirmEmailData{
-				Greeting:  m.To.Greeting(),
-				Link:      link,
-				NewEmail:  m.To.Address(),
-				ExpiresAt: m.ExpiresAt,
+			data: confirmEmailChangeData{
+				Greeting:   m.To.Greeting(),
+				Link:       link,
+				NewAddress: m.To.Address(),
+				ExpiresAt:  m.ExpiresAt,
 			},
 		}, nil
 
-	case notification.EmailTakenNotice:
+	case notification.AddressTakenNotice:
 		return composed{
-			template:  templateEmailTaken,
+			template:  templateAddressTaken,
 			subject:   "Someone tried to use your email address",
 			plainText: "Someone tried to change their account email to your address.",
-			data:      emailTakenData{Email: m.To.Address()},
+			data:      addressTakenData{Address: m.To.Address()},
 		}, nil
 
 	case notification.EmailChangedNotice:
@@ -126,7 +126,7 @@ func (n *Notifier) compose(msg notification.Message) (composed, error) {
 			template:  templateEmailChanged,
 			subject:   "Your email address was changed",
 			plainText: "Your account email address was changed.",
-			data:      emailChangedData{Greeting: m.To.Greeting(), NewEmail: m.NewEmail},
+			data:      emailChangedData{Greeting: m.To.Greeting(), NewAddress: m.NewAddress},
 		}, nil
 
 	case notification.OrderConfirmation:

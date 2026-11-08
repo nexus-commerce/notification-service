@@ -75,7 +75,7 @@ func run() error {
 		kafka.NewRegistered(usecase.NewSendWelcome(notifier)),
 		kafka.NewDuplicateRegistrationAttempted(usecase.NewSendDuplicateRegistrationNotice(notifier)),
 		kafka.NewEmailChangeRequested(usecase.NewSendEmailChangeConfirmation(notifier, opener, time.Now)),
-		kafka.NewEmailChangeToTakenAddressAttempted(usecase.NewSendEmailTakenNotice(notifier)),
+		kafka.NewEmailChangeToTakenAddressAttempted(usecase.NewSendAddressTakenNotice(notifier)),
 		kafka.NewEmailChanged(usecase.NewSendEmailChangedNotice(notifier)),
 	)
 	if err != nil {

@@ -29,7 +29,7 @@ func (l Links) ConfirmRegistrationURL(token string) string {
 	return l.withToken("/confirm-registration", token)
 }
 
-func (l Links) ConfirmEmailURL(token string) string {
+func (l Links) EmailChangeConfirmationURL(token string) string {
 	return l.withToken("/confirm-email", token)
 }
 

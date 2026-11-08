@@ -86,7 +86,7 @@ func TestDecodeEmailChangeToTakenAddressAttempted(t *testing.T) {
 
 func TestDecodeEmailChanged(t *testing.T) {
 	got, err := DecodeEmailChanged(userMsg(TypeEmailChanged, `{"userId":"u1","firstName":"Jane","lastName":"Doe","oldEmail":"o@b.c","newEmail":"n@b.c"}`))
-	want := notification.EmailChanged{Recipient: mustRecipient(t, "Jane", "Doe", "o@b.c"), NewEmail: "n@b.c"}
+	want := notification.EmailChanged{Recipient: mustRecipient(t, "Jane", "Doe", "o@b.c"), NewAddress: "n@b.c"}
 	if err != nil || got != want {
 		t.Errorf("got %+v, %v", got, err)
 	}

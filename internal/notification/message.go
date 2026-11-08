@@ -43,17 +43,17 @@ func (m EmailChangeConfirmation) Recipient() Recipient { return m.To }
 
 func (EmailChangeConfirmation) isMessage() {}
 
-type EmailTakenNotice struct {
+type AddressTakenNotice struct {
 	To Recipient
 }
 
-func (m EmailTakenNotice) Recipient() Recipient { return m.To }
+func (m AddressTakenNotice) Recipient() Recipient { return m.To }
 
-func (EmailTakenNotice) isMessage() {}
+func (AddressTakenNotice) isMessage() {}
 
 type EmailChangedNotice struct {
-	To       Recipient
-	NewEmail string
+	To         Recipient
+	NewAddress string
 }
 
 func (m EmailChangedNotice) Recipient() Recipient { return m.To }

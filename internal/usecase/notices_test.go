@@ -36,30 +36,30 @@ func TestSendDuplicateRegistrationNotice(t *testing.T) {
 	}
 }
 
-func TestSendEmailTakenNotice(t *testing.T) {
+func TestSendAddressTakenNotice(t *testing.T) {
 	n := &fakeNotifier{}
 	ev := notification.EmailChangeToTakenAddressAttempted{Recipient: anonymous}
 
-	err := usecase.NewSendEmailTakenNotice(n).Execute(t.Context(), ev)
+	err := usecase.NewSendAddressTakenNotice(n).Execute(t.Context(), ev)
 
 	if err != nil {
 		t.Fatalf("Execute() error: %v", err)
 	}
-	if got, want := only[notification.EmailTakenNotice](t, n), (notification.EmailTakenNotice{To: anonymous}); got != want {
+	if got, want := only[notification.AddressTakenNotice](t, n), (notification.AddressTakenNotice{To: anonymous}); got != want {
 		t.Errorf("sent %+v, want %+v", got, want)
 	}
 }
 
 func TestSendEmailChangedNotice(t *testing.T) {
 	n := &fakeNotifier{}
-	ev := notification.EmailChanged{Recipient: janeOldAddress, NewEmail: "new@example.com"}
+	ev := notification.EmailChanged{Recipient: janeOldAddress, NewAddress: "new@example.com"}
 
 	err := usecase.NewSendEmailChangedNotice(n).Execute(t.Context(), ev)
 
 	if err != nil {
 		t.Fatalf("Execute() error: %v", err)
 	}
-	want := notification.EmailChangedNotice{To: janeOldAddress, NewEmail: "new@example.com"}
+	want := notification.EmailChangedNotice{To: janeOldAddress, NewAddress: "new@example.com"}
 	if got := only[notification.EmailChangedNotice](t, n); got != want {
 		t.Errorf("sent %+v, want %+v", got, want)
 	}
