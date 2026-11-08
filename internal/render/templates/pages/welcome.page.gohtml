@@ -6,10 +6,10 @@
 
 {{define "content"}}
     <div style="text-align: center;">
-        <p>Hi {{.FirstName}},</p>
-        <p>Thank you for registering at MyEcom. We are thrilled to have you with us.</p>
+        <p>{{if .FirstName}}Hi {{.FirstName}},{{else}}Hello,{{end}}</p>
+        <p>Your email address is confirmed and your MyEcom account is ready.</p>
         <p>You can now browse our collection and start shopping.</p>
-        <a href="{{.LoginURL}}" class="button">Start Shopping</a>
+        <a href="{{.LoginURL}}" class="button">Log in</a>
         <p>If the button above doesn't work, copy and paste this link into your browser:</p>
         <p><a href="{{.LoginURL}}">{{.LoginURL}}</a></p>
     </div>

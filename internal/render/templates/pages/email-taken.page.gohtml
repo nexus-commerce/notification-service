@@ -1,0 +1,15 @@
+{{template "base" .}}
+
+{{define "title"}}Someone tried to use your email address{{end}}
+
+{{define "header"}}Email address notice{{end}}
+
+{{define "content"}}
+    <div style="text-align: center;">
+        <p>Hello,</p>
+        <p>Someone tried to change the email address of their MyEcom account to <strong>{{.Email}}</strong>, which already belongs to an account.</p>
+        <p>No changes were made. If this was not you, no action is needed.</p>
+    </div>
+{{end}}
+
+{{define "footer-text"}}Thank you for being with us!{{end}}

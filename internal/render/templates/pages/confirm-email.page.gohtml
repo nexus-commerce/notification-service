@@ -1,0 +1,19 @@
+{{template "base" .}}
+
+{{define "title"}}Confirm your new email address{{end}}
+
+{{define "header"}}Confirm your new email address{{end}}
+
+{{define "content"}}
+    <div style="text-align: center;">
+        <p>{{if .FirstName}}Hi {{.FirstName}},{{else}}Hello,{{end}}</p>
+        <p>We received a request to change the email address of your MyEcom account to <strong>{{.NewEmail}}</strong>. Please confirm the change.</p>
+        <a href="{{.Link}}" class="button">Confirm new email address</a>
+        <p>If the button above doesn't work, copy and paste this link into your browser:</p>
+        <p><a href="{{.Link}}">{{.Link}}</a></p>
+        <p>This link expires on {{.ExpiresAt.Format "Jan 2, 2006 15:04 MST"}}.</p>
+        <p>If you did not request this change, you can safely ignore this email.</p>
+    </div>
+{{end}}
+
+{{define "footer-text"}}Thank you for being with us!{{end}}

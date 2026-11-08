@@ -6,6 +6,7 @@ require (
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/segmentio/kafka-go v0.4.49
+	github.com/sendgrid/rest v2.6.9+incompatible
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
 	golang.org/x/crypto v0.42.0
 	golang.org/x/sync v0.24.0
@@ -20,7 +21,6 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
-	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	golang.org/x/net v0.44.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect

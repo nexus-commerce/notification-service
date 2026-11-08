@@ -1,0 +1,19 @@
+{{template "base" .}}
+
+{{define "title"}}Confirm your MyEcom registration{{end}}
+
+{{define "header"}}Confirm your registration{{end}}
+
+{{define "content"}}
+    <div style="text-align: center;">
+        <p>{{if .FirstName}}Hi {{.FirstName}},{{else}}Hello,{{end}}</p>
+        <p>Thank you for registering at MyEcom. Please confirm your email address to activate your account.</p>
+        <a href="{{.Link}}" class="button">Confirm email address</a>
+        <p>If the button above doesn't work, copy and paste this link into your browser:</p>
+        <p><a href="{{.Link}}">{{.Link}}</a></p>
+        <p>This link expires on {{.ExpiresAt.Format "Jan 2, 2006 15:04 MST"}}.</p>
+        <p>If you did not register at MyEcom, you can safely ignore this email.</p>
+    </div>
+{{end}}
+
+{{define "footer-text"}}Thank you for joining us!{{end}}

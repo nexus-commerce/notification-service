@@ -60,7 +60,7 @@ type UserData struct {
 }
 
 const orderConfirmedTemplate = "order-confirmed.page.gohtml"
-const userRegisteredTemplate = "user-registered.page.gohtml"
+const userRegisteredTemplate = "welcome.page.gohtml"
 
 type Service struct {
 	sendGridClient *sendgrid.Client
