@@ -21,7 +21,7 @@ type Consumer struct {
 
 type SendGrid struct {
 	APIKey      string `env:"SENDGRID_API_KEY,required,notEmpty"`
-	FromName    string `env:"MAIL_FROM_NAME" envDefault:"MyEcom"`
+	FromName    string `env:"MAIL_FROM_NAME" envDefault:"NexusEcommerce"`
 	FromAddress string `env:"MAIL_FROM_ADDRESS,required,notEmpty"`
 }
 
